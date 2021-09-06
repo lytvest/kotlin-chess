@@ -83,7 +83,7 @@ class StartScene(private val dependency: MyDependency): Scene() {
 
         val profileBitmap = resourcesVfs["user.png"].readBitmap().slice()
         val profilePressedBitmap = resourcesVfs["user-pressed.png"].readBitmap().slice()
-        val profileButton = image(settingBitmap).addTo(this).apply {
+        val profileButton = image(profileBitmap).addTo(this).apply {
             size(100, 100)
             xy(WIDTH - 140, HEIGHT - 110)
             onDown {

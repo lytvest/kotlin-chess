@@ -16,9 +16,12 @@ import com.soywiz.korio.file.std.resourcesVfs
 import com.soywiz.korma.geom.Point
 import kotlin.math.min
 import com.soywiz.korge.tween.get
+import com.soywiz.korge.tween.tweenAsync
 import com.soywiz.korgw.GameWindow
 import com.soywiz.korinject.AsyncInjector
+import com.soywiz.korio.async.async
 import com.soywiz.korio.async.launch
+import com.soywiz.korio.async.launchImmediately
 import com.soywiz.korma.geom.SizeInt
 import com.soywiz.korma.interpolation.Easing
 import kotlin.coroutines.CoroutineContext
@@ -104,7 +107,7 @@ class BoardContainer(
     var oldPoint: Pair<Int, Int>? = null
 
     fun tweenAlpha(img: Image, end: Double, time: TimeSpan = 300.milliseconds) {
-        launch(coroutineContext) {
+        launchImmediately(coroutineContext) {
             img.tween(
                 img::alpha[img.alpha, end],
                 easing = Easing.EASE_OUT,
@@ -135,7 +138,7 @@ class BoardContainer(
                 if (seeFigures.contains(iter.key)) {
                     tweenAlpha(img, 1.0, 1.5.seconds)
                 } else {
-                    tweenAlpha(img, 0.1, 1.seconds)
+                    tweenAlpha(img, 0.0, 1.seconds)
                 }
             }
         }
@@ -150,7 +153,7 @@ class BoardContainer(
     }
 
     private fun showBanner(name: String) {
-        launch(coroutineContext) {
+        launchImmediately(coroutineContext) {
             val bannerBitmap = resourcesVfs[name].readBitmap()
             val banner = image(bannerBitmap).addTo(this).apply {
                 xy(40, 40)
@@ -162,8 +165,7 @@ class BoardContainer(
 
     fun clickTo(p: Pair<Int, Int>) {
         println("click tp $p [${board.arr[p.first, p.second]}] [$oldPoint]")
-        if (board.endGame)
-            endGame()
+
         if (oldPoint == null) {
             if (board.arr[p.first, p.second] != '_') {
                 swapColors(p)
@@ -189,8 +191,9 @@ class BoardContainer(
                 }
                 oldPoint = null
             }
-
         }
+        if (board.endGame)
+            endGame()
     }
 
     private fun moveFigure(
@@ -201,7 +204,7 @@ class BoardContainer(
         old?.let { oldn ->
             figureImages[p]?.let {
                 figuresExit.add(it)
-                launch(coroutineContext) {
+                launchImmediately(coroutineContext) {
                     it.tween(
                         it::x[it.x, sizeItem * 0.4 * figuresExit.size],
                         it::y[it.y, 8 * sizeItem],
@@ -214,7 +217,7 @@ class BoardContainer(
         }
 
         figureImages[p] = fig
-        launch(coroutineContext) {
+        launchImmediately(coroutineContext) {
             fig.tween(
                 fig::x[fig.x, p.first * sizeItem],
                 fig::y[fig.y, p.second * sizeItem],

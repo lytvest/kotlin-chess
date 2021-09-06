@@ -10,6 +10,14 @@ class Board(val arr: Array2<Char>) {
     var endGame = false
     var winWhite = false
 
+
+    fun copy(): Board = Board(arr.clone()).let{
+        it.colorCourse = colorCourse
+        it.endGame = endGame
+        it.winWhite = winWhite
+        it
+    }
+
     fun move(sx: Int, sy: Int, ex: Int, ey: Int) {
         if (arr[ex,ey] in "kK"){
             endGame = true
@@ -21,16 +29,12 @@ class Board(val arr: Array2<Char>) {
     }
 
     fun aiTurn(): Pair<PairInt, PairInt>?{
-        val all = getAllCourse()
-        if (all.isEmpty())
-            return null
-        return all[Random.nextInt(all.size)]
+        return calculateRec(2)?.second
     }
 
     fun getAllFigures(color: Char = 'p') : List<PairInt> {
         val res = mutableListOf<PairInt>()
         arr.each { x, y, ch -> if (ch isFriend color && ch != '_') res.add(x to y)}
-        println("all figures $res")
         return res
     }
 
@@ -44,14 +48,21 @@ class Board(val arr: Array2<Char>) {
         val res =  getAllFigures(color).flatMap { allMoves(it.first, it.second) }.filter { (x, y) ->
             arr[x,y] != '_'
         }
-        return res
+        colorCourse = nextColorCourse()
+        val res2 = getAllFigures(swapColor(color)).map { it to allMoves(it.first, it.second) }.filter { r ->
+            r.second.count { arr[it.first, it.second] != '_' } > 0
+        }.map { it.first }
+        colorCourse = nextColorCourse()
+        return res + res2
     }
 
     fun isWhile(x:Int, y:Int): Boolean = arr[x,y] isFriend 'P'
     fun isBlack(x:Int, y:Int): Boolean = arr[x,y] isFriend 'p'
 
     private fun nextColorCourse(): Char =
-        if (colorCourse == 'P') 'p' else 'P'
+        swapColor(colorCourse)
+    private fun swapColor(ch: Char): Char =
+        if (ch == 'P') 'p' else 'P'
 
 
     fun allMoves(x: Int, y: Int): List<PairInt> {
@@ -179,6 +190,26 @@ class Board(val arr: Array2<Char>) {
         }
         else if (arr[x, y] == 'P')
             pm(-1, 6, false)
+        return res
+    }
+
+    fun score(): Int{
+        var res = 0
+        arr.each{ x, y, ch ->
+            val s = when(ch.uppercaseChar()){
+                'K' -> 100
+                'Q' -> 8
+                'R' -> 6
+                'B' -> 3
+                'N' -> 3
+                'P' -> 1
+                else -> 0
+            }
+            if (ch.isUpperCase())
+                res += s
+            else
+                res -= s
+        }
         return res
     }
 
