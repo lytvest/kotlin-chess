@@ -34,16 +34,17 @@ const val HEIGHT = 800
 suspend fun main() = Korge(Korge.Config(module = MyModule))
 
 object MyModule : Module() {
-    override val mainScene: KClass<out Scene> = StartScene::class
+    override val mainScene: KClass<out Scene> = TestScene::class
     override val bgcolor: RGBA = Colors["#1254ab"]
+    override val windowSize: SizeInt = SizeInt(WIDTH, HEIGHT)
     override val size: SizeInt = SizeInt(WIDTH, HEIGHT)
-    override val windowSize: SizeInt = SizeInt(550, 800)
-    override val quality: GameWindow.Quality = GameWindow.Quality.QUALITY
     override val title: String = "Invisible chess"
 
     override suspend fun AsyncInjector.configure() {
         mapInstance(MyDependency("HELLO WORLD"))
+        mapSingleton { ResourceLoader(context = get()) }
         mapPrototype { StartScene(get()) }
+        mapPrototype { TestScene(get()) }
     }
 }
 

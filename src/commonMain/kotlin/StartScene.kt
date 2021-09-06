@@ -20,7 +20,7 @@ import com.soywiz.korma.geom.Anchor
 import com.soywiz.korma.geom.ScaleMode
 import com.soywiz.korma.interpolation.Easing
 
-class StartScene(private val dependency: MyDependency): Scene() {
+class StartScene(val loader: ResourceLoader): Scene() {
 
     lateinit var images : Map<Char, Bitmap>
     var boardContainer: BoardContainer? = null
@@ -28,18 +28,18 @@ class StartScene(private val dependency: MyDependency): Scene() {
     override suspend fun Container.sceneInit() {
 
         val self = this
-        val bgBitmap = resourcesVfs["bg.jpg"].readBitmap()
+        val bgBitmap = loader.bitmap("bg.jpg")!!
         image(bgBitmap).size(WIDTH, HEIGHT).addTo(this)
 
-        val nameBitmap = resourcesVfs["name.png"].readBitmap()
+        val nameBitmap = loader.bitmap("name.png")!!
         image(nameBitmap).addTo(this).apply {
             xy(40,40)
             size(WIDTH - 80.0, height / width * (WIDTH - 80.0))
         }
-        val playBitmap = resourcesVfs["play-button.png"].readBitmap().slice()
-        val playPressedBitmap = resourcesVfs["play-button-pressed.png"].readBitmap().slice()
-        val playStopBitmap = resourcesVfs["stop.png"].readBitmap().slice()
-        val playStopPressedBitmap = resourcesVfs["stop-pressed.png"].readBitmap().slice()
+        val playBitmap = loader.sliceBitmap("play-button.png")!!
+        val playPressedBitmap = loader.sliceBitmap("play-button-pressed.png")!!
+        val playStopBitmap = loader.sliceBitmap("stop.png")!!
+        val playStopPressedBitmap = loader.sliceBitmap("stop-pressed.png")!!
         val playButton = image(playBitmap).addTo(this).apply {
             size(200, 200)
             xy(WIDTH / 2 - 100, HEIGHT - 210 )
@@ -68,8 +68,8 @@ class StartScene(private val dependency: MyDependency): Scene() {
             }
         }
 
-        val settingBitmap = resourcesVfs["settings.png"].readBitmap().slice()
-        val settingPressedBitmap = resourcesVfs["settings-pressed.png"].readBitmap().slice()
+        val settingBitmap = loader.sliceBitmap("settings.png")!!
+        val settingPressedBitmap = loader.sliceBitmap("settings-pressed.png")!!
         val settingButton = image(settingBitmap).addTo(this).apply {
             size(100, 100)
             xy(40, HEIGHT - 110)
@@ -81,8 +81,8 @@ class StartScene(private val dependency: MyDependency): Scene() {
             }
         }
 
-        val profileBitmap = resourcesVfs["user.png"].readBitmap().slice()
-        val profilePressedBitmap = resourcesVfs["user-pressed.png"].readBitmap().slice()
+        val profileBitmap = loader.sliceBitmap("user.png")!!
+        val profilePressedBitmap = loader.sliceBitmap("user-pressed.png")!!
         val profileButton = image(profileBitmap).addTo(this).apply {
             size(100, 100)
             xy(WIDTH - 140, HEIGHT - 110)
