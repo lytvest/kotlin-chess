@@ -9,6 +9,8 @@ import com.soywiz.korio.file.std.resourcesVfs
 import com.soywiz.korim.bitmap.BitmapSlice
 import com.soywiz.korim.bitmap.slice
 import com.soywiz.korinject.AsyncInjector
+import com.soywiz.korma.geom.Anchor
+import com.soywiz.korma.geom.ScaleMode
 import com.soywiz.korma.geom.SizeInt
 import kotlin.reflect.KClass
 
@@ -18,11 +20,14 @@ const val HEIGHT = 800
 suspend fun main() = Korge(Korge.Config(module = MyModule))
 
 object MyModule : Module() {
-    override val mainScene: KClass<out Scene> = LoaderScene::class
+    override val mainScene: KClass<out Scene> = TestScene::class
     override val bgcolor: RGBA = Colors["#1254ab"]
     override val windowSize: SizeInt = SizeInt(WIDTH, HEIGHT)
     override val size: SizeInt = SizeInt(WIDTH, HEIGHT)
     override val title: String = "Invisible chess"
+    override val clipBorders: Boolean = false
+    override val scaleAnchor: Anchor = Anchor.TOP_LEFT
+    override val scaleMode: ScaleMode = ScaleMode.SHOW_ALL
 
     override suspend fun AsyncInjector.configure() {
         mapInstance(MyDependency("HELLO WORLD"))
@@ -30,6 +35,7 @@ object MyModule : Module() {
         mapSingleton { SettingProfile() }
         mapPrototype { StartScene(get(), get()) }
         mapPrototype { LoaderScene(get()) }
+        mapPrototype { TestScene(get(), get()) }
     }
 }
 

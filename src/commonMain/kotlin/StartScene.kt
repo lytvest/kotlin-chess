@@ -2,48 +2,47 @@ import com.soywiz.klock.milliseconds
 import com.soywiz.klock.seconds
 import com.soywiz.kmem.clamp
 import com.soywiz.korge.annotations.KorgeExperimental
-import com.soywiz.korge.component.docking.dockedTo
-import com.soywiz.korge.component.onStageResized
+import com.soywiz.korge.component.docking.*
+import com.soywiz.korge.component.length.*
 import com.soywiz.korge.input.onClick
 import com.soywiz.korge.input.onDown
 import com.soywiz.korge.input.onMouseDrag
 import com.soywiz.korge.input.onUp
-import com.soywiz.korge.scene.MaskTransition
 import com.soywiz.korge.scene.Scene
 import com.soywiz.korge.tween.get
-import com.soywiz.korge.tween.tween
 import com.soywiz.korge.tween.tweenAsync
-import com.soywiz.korge.ui.UIButton
-import com.soywiz.korge.ui.uiScrollable
 import com.soywiz.korge.view.*
-import com.soywiz.korge.view.filter.TransitionFilter
-import com.soywiz.korim.bitmap.Bitmap
-import com.soywiz.korim.bitmap.BitmapSlice
-import com.soywiz.korim.bitmap.slice
-import com.soywiz.korim.color.Colors
 import com.soywiz.korim.color.RGBA
-import com.soywiz.korim.color.RGBAf
-import com.soywiz.korim.format.readBitmap
 import com.soywiz.korio.async.launch
-import com.soywiz.korio.file.std.resourcesVfs
-import com.soywiz.korma.geom.Anchor
-import com.soywiz.korma.geom.ScaleMode
 import com.soywiz.korma.interpolation.Easing
 import kotlin.math.round
+import com.soywiz.korge.component.docking.*
+import com.soywiz.korge.component.length.*
+import com.soywiz.korge.*
+import com.soywiz.korge.component.docking.*
+import com.soywiz.korge.component.length.*
+import com.soywiz.korge.view.*
+import com.soywiz.korim.color.*
+import com.soywiz.korma.geom.*
+import com.soywiz.korui.layout.*
+import kotlin.math.*
 
-class StartScene(val loader: ResourceLoader, val settings: SettingProfile): Scene() {
+class StartScene(val loader: ResourceLoader, val settings: SettingProfile) : Scene() {
     var boardContainer: BoardContainer? = null
 
     @KorgeExperimental
     override suspend fun Container.sceneInit() {
 
         val self = this
-        val bgBitmap = loader.bitmap("bg.jpg")!!
-        image(bgBitmap).size(WIDTH, HEIGHT).addTo(this)
+        val bgBitmap = loader.bitmap("bg.jpg")
+        image(bgBitmap).addTo(this).lengths {
+            width = 100.vw
+            height = 100.vh
+        }
 
-        val nameBitmap = loader.bitmap("name.png")!!
+        val nameBitmap = loader.bitmap("name.png")
         image(nameBitmap).addTo(this).apply {
-            xy(40,40)
+            xy(40, 40)
             size(WIDTH - 80.0, height / width * (WIDTH - 80.0))
         }
         val settingContainer = container {
@@ -56,23 +55,23 @@ class StartScene(val loader: ResourceLoader, val settings: SettingProfile): Scen
                 RGBA(0, 0, 0, 240),
                 3.0
             ).addTo(this)
-            val text1 = text("Difficulty: ${settings.difficulty + 1}", 30.0){
+            val text1 = text("Difficulty: ${settings.difficulty + 1}", 30.0) {
                 xy(20, 14)
             }
-            roundRect(WIDTH - 135, 5, 5, 5, RGBA(255,255,255,170)).addTo(this) {
-                xy(20,80)
+            roundRect(WIDTH - 135, 5, 5, 5, RGBA(255, 255, 255, 170)).addTo(this) {
+                xy(20, 80)
             }
             val start = 20.0
             val end = WIDTH - 165.0
             val len = (end - start) / 4.0
-            roundRect(50,50, 30,30, RGBA(255,255,255, 200), RGBA(255,255,255,240), 2.0){
+            roundRect(50, 50, 30, 30, RGBA(255, 255, 255, 200), RGBA(255, 255, 255, 240), 2.0) {
                 xy(start + len * 2, 60.0)
                 onMouseDrag { info ->
                     x -= info.deltaDx
                     x = x.clamp(start, end)
                     settings.difficulty = round(((x - start) / len)).toInt()
                     text1.text = "Difficulty: ${settings.difficulty + 1}"
-                    if (info.end){
+                    if (info.end) {
                         launch {
                             tweenAsync(
                                 this@roundRect::x[start + len * settings.difficulty],
@@ -124,11 +123,16 @@ class StartScene(val loader: ResourceLoader, val settings: SettingProfile): Scen
         val playStopPressedBitmap = loader.sliceBitmap("stop-pressed.png")!!
         val playButton = image(playBitmap).addTo(this).apply {
             size(200, 200)
-            xy(WIDTH / 2 - 100, HEIGHT - 210 )
+            xy(WIDTH / 2 - 100, HEIGHT - 210)
             onClick {
                 if (boardContainer == null) {
                     boardContainer =
-                        BoardContainer(loader, coroutineContext, settings, (WIDTH - 60) / 8.0).addTo(self)
+                        BoardContainer(
+                            loader,
+                            coroutineContext,
+                            settings,
+                            (WIDTH - 60) / 8.0
+                        ).addTo(self)
                     boardContainer!!.xy(30, 30)
                     tweenAsync(
                         boardContainer!!::x[WIDTH, 30],
