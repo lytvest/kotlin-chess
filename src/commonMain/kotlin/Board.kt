@@ -1,35 +1,41 @@
 import com.soywiz.kds.Array2
-import kotlin.random.Random
 
 typealias PairInt = Pair<Int, Int>
 
-class Board(val arr: Array2<Char>) {
+class Board(val arr: Array2<Char>, val difficulty: Int) {
     var colorCourse = 'P'
-    var pEbdBlack = 'q'
-    var pEbdWhite = 'Q'
+    var pEndBlack = 'q'
+    var pEndWhite = 'Q'
     var endGame = false
     var winWhite = false
 
 
-    fun copy(): Board = Board(arr.clone()).let{
+    fun copy(): Board = Board(arr.clone(), difficulty).let{
         it.colorCourse = colorCourse
         it.endGame = endGame
         it.winWhite = winWhite
         it
     }
 
-    fun move(sx: Int, sy: Int, ex: Int, ey: Int) {
-        if (arr[ex,ey] in "kK"){
+    fun move(start: PairInt, end: PairInt): Turn? {
+        if (!allMoves(start).contains(end))
+            return null
+        if (arr[end] in "kK"){
             endGame = true
-            winWhite = arr[ex, ey] == 'k'
+            winWhite = arr[end] == 'k'
         }
-        arr[ex, ey] = arr[sx, sy]
-        arr[sx, sy] = '_'
+        arr[end] = arr[start]
+        arr[start] = '_'
         colorCourse = nextColorCourse()
+        if (arr[end] in "pP" && (end.second == 0 || end.second == 7)){
+            arr[end] = if (arr[end] == 'p') pEndBlack else pEndWhite
+            return Turn(start, end, arr[end])
+        }
+        return Turn(start, end)
     }
 
-    fun aiTurn(): Pair<PairInt, PairInt>?{
-        return calculateRec(2)?.second
+    fun aiTurn(): Turn?{
+        return findBestTurn(difficulty).second
     }
 
     fun getAllFigures(color: Char = 'p') : List<PairInt> {
@@ -38,18 +44,18 @@ class Board(val arr: Array2<Char>) {
         return res
     }
 
-    fun getAllCourse(color: Char = 'p'): List<Pair<PairInt, PairInt>> {
+    fun getAllCourse(color: Char = 'p'): List<Turn> {
         return getAllFigures(color).flatMap { pair ->
-            allMoves(pair.first, pair.second).map { pair to it }
+            allMoves(pair).map { Turn(pair, it) }
         }
     }
 
     fun getSeeFigures(color: Char = 'P') : List<PairInt> {
-        val res =  getAllFigures(color).flatMap { allMoves(it.first, it.second) }.filter { (x, y) ->
-            arr[x,y] != '_'
+        val res =  getAllFigures(color).flatMap { allMoves(it) }.filter { pair ->
+            arr[pair] != '_'
         }
         colorCourse = nextColorCourse()
-        val res2 = getAllFigures(swapColor(color)).map { it to allMoves(it.first, it.second) }.filter { r ->
+        val res2 = getAllFigures(swapColor(color)).map { it to allMoves(it) }.filter { r ->
             r.second.count { arr[it.first, it.second] != '_' } > 0
         }.map { it.first }
         colorCourse = nextColorCourse()
@@ -65,18 +71,18 @@ class Board(val arr: Array2<Char>) {
         if (ch == 'P') 'p' else 'P'
 
 
-    fun allMoves(x: Int, y: Int): List<PairInt> {
-        if(arr[x,y] == '_' || arr[x,y] isEnemy colorCourse || endGame)
-            return listOf()
-        return when (arr[x, y].uppercaseChar()) {
-            'K' -> kindMoves(x, y)
-            'P' -> pawnMoves(x, y)
-            'N' -> knightMovies(x, y)
-            'B' -> bishopMoves(x, y)
-            'R' -> rookMoves(x, y)
-            'Q' -> queenMoves(x, y)
+    fun allMoves(pair: PairInt): Set<PairInt> {
+        if(arr[pair] == '_' || arr[pair] isEnemy colorCourse || endGame)
+            return setOf()
+        return when (arr[pair].uppercaseChar()) {
+            'K' -> kindMoves(pair)
+            'P' -> pawnMoves(pair)
+            'N' -> knightMovies(pair)
+            'B' -> bishopMoves(pair)
+            'R' -> rookMoves(pair)
+            'Q' -> queenMoves(pair)
             else -> listOf()
-        }
+        }.toSet()
     }
 
     infix fun Char.isEnemy(ch: Char) =
@@ -103,7 +109,9 @@ class Board(val arr: Array2<Char>) {
         }
     }
 
-    fun rookMoves(x: Int, y: Int): List<PairInt> {
+    fun rookMoves(pair: PairInt): List<PairInt> {
+        val x = pair.first
+        val y = pair.second
         val res = mutableListOf<PairInt>()
 
 
@@ -115,7 +123,9 @@ class Board(val arr: Array2<Char>) {
         return res
     }
 
-    fun bishopMoves(x: Int, y: Int): List<PairInt> {
+    fun bishopMoves(pair: PairInt): List<PairInt> {
+        val x = pair.first
+        val y = pair.second
         val res = mutableListOf<PairInt>()
 
         checkTo(x, y, -1, -1, res)
@@ -125,11 +135,13 @@ class Board(val arr: Array2<Char>) {
 
         return res
     }
-    fun queenMoves(x: Int, y: Int): List<PairInt> {
-        return rookMoves(x,y) + bishopMoves(x,y)
+    fun queenMoves(pair: PairInt): List<PairInt> {
+        return rookMoves(pair) + bishopMoves(pair)
     }
 
-    fun knightMovies(x: Int, y: Int): List<PairInt> {
+    fun knightMovies(pair: PairInt): List<PairInt> {
+        val x = pair.first
+        val y = pair.second
         val res = mutableListOf<PairInt>()
         val list = listOf(
             x + 1 to y + 2,
@@ -148,7 +160,9 @@ class Board(val arr: Array2<Char>) {
         return res
     }
 
-    fun kindMoves(x: Int, y: Int): List<PairInt> {
+    fun kindMoves(pair: PairInt): List<PairInt> {
+        val x = pair.first
+        val y = pair.second
         val res = mutableListOf<PairInt>()
         val list = listOf(
             x - 1 to y - 1,
@@ -167,7 +181,9 @@ class Board(val arr: Array2<Char>) {
         return res
     }
 
-    fun pawnMoves(x: Int, y: Int): List<PairInt> {
+    fun pawnMoves(pair: PairInt): List<PairInt> {
+        val x = pair.first
+        val y = pair.second
         val res = mutableListOf<PairInt>()
 
         fun pm(w: Int, line: Int, letter: Boolean) {
@@ -192,17 +208,20 @@ class Board(val arr: Array2<Char>) {
             pm(-1, 6, false)
         return res
     }
+    fun dump(){
+        arr.dump()
+    }
 
     fun score(): Int{
         var res = 0
         arr.each{ x, y, ch ->
             val s = when(ch.uppercaseChar()){
-                'K' -> 100
-                'Q' -> 8
-                'R' -> 6
-                'B' -> 3
-                'N' -> 3
-                'P' -> 1
+                'K' -> 900
+                'Q' -> 90
+                'R' -> 60
+                'B' -> 30
+                'N' -> 30
+                'P' -> 10
                 else -> 0
             }
             if (ch.isUpperCase())
@@ -215,14 +234,24 @@ class Board(val arr: Array2<Char>) {
 
     companion object {
         const val base = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR"
-        fun from(s: String): Board =
-            Board(Array2(s.split("/").map { parseLine(it) }.toList()))
+        fun from(s: String, difficulty: Int): Board =
+            Board(Array2(s.split("/").map { parseLine(it) }.toList()), difficulty)
 
-        fun started(): Board = from(base)
+        fun started(difficulty: Int): Board = from(base, difficulty)
         fun parseLine(s: String): List<Char> =
             s.flatMap { ch ->
                 if (ch.isDigit()) List(ch.toString().toInt()) { '_' } else listOf(ch)
             }
 
     }
+    data class Turn(val start: PairInt, val end: PairInt, val figure: Char? = null)
+
 }
+
+operator fun Array2<Char>.get(pair: PairInt) =
+    this[pair.first, pair.second]
+
+operator fun Array2<Char>.set(pair: PairInt, value: Char) {
+    this[pair.first, pair.second] = value
+}
+

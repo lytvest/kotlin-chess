@@ -19,6 +19,7 @@ apply<KorgeGradlePlugin>()
 korge {
 	id = "ru.bdm.games.chess"
 	name = "chess"
+	androidTargetSdk = 30
 // To enable all targets at once
 
 	//targetAll()
@@ -31,6 +32,6 @@ korge {
 	targetJvm()
 	targetJs()
 	targetDesktop()
-	targetIos()
-	targetAndroidIndirect() // targetAndroidDirect()
+	//targetIos()
+	targetAndroidDirect()
 }
